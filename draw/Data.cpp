@@ -65,16 +65,15 @@ bool CData::DrawGrid(HDC hdc, RECT drawArea)
 {
 	Graphics graphics(hdc);
 	Pen pen2(Color(255, 153, 153, 153));
-	LONG drawYOffset = (drawArea.bottom - drawArea.top) / 2 + drawArea.top;
-	LONG drawXOffset = (drawArea.right - drawArea.left) / 2 + drawArea.left;
-
+	
 	Rectangle(hdc, drawArea.left, drawArea.top, drawArea.right, drawArea.bottom);
-	graphics.DrawLine(&pen2, drawXOffset, drawArea.top, drawXOffset, drawArea.bottom);
-	graphics.DrawLine(&pen2, drawArea.left, drawYOffset, drawArea.right, drawYOffset);
+	graphics.DrawLine(&pen2, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.top, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.bottom);
+	graphics.DrawLine(&pen2, drawArea.left, (drawArea.bottom - drawArea.top) / 2 + drawArea.top, drawArea.right, (drawArea.bottom - drawArea.top) / 2 + drawArea.top);
+	
 	return 0;
-} 
+}
 void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
-{ 
+{
 	Graphics graphics(hdc);
 	Pen pen(Color(255, 0, 0, 255));
 	Pen pen2(Color(255, 0, 255, 0));
@@ -83,7 +82,7 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 	TAxesToDraw *axesToDraw;
 	std::vector<Point3D> *dataToDraw;
 	PointF drawPointStart, drawPointEnd;
-	 
+
 	float drawYOffset = (drawArea.bottom - drawArea.top) / 2 + drawArea.top;
 	if (gyroOrPos)
 	{
@@ -164,27 +163,33 @@ bool CData::Draw(HDC hdc, RECT drawArea)
 bool CData::Read()
 {
 	std::string line;
-	std::fstream out("out.txt", std::ios::out);
 
 	double dummy;
-	Point3D gyroPoint, posPoint;
+	Point3D gyroPoint,posPoint;
+
+	for(int i=0; i<3; i++)         // zerowanie punktów
+	{ 
+		gyroPoint.point3D[i] = 0;
+		posPoint.point3D[i] = 0;
+	}
+
 
 	while (std::getline(file, line)) // read one line from file
 	{
 		std::istringstream iss(line); // access line as a stream
 
-		iss >> posPoint.x >> posPoint.y >> posPoint.z;
-		posData.push_back(posPoint);
-
 		iss >> dummy >> dummy >> dummy; //olanie akcelerometru
 		iss >> dummy >> dummy >> dummy; // i magnetometru
 
 		iss >> gyroPoint.x >> gyroPoint.y >> gyroPoint.z;
+
+		posPoint.x += gyroPoint.x * SAMPLE_TIME_RES; ///!!!
+		posPoint.y += gyroPoint.y * SAMPLE_TIME_RES;
+		posPoint.z += gyroPoint.z * SAMPLE_TIME_RES;
+
+		posData.push_back(posPoint);		
 		gyroData.push_back(gyroPoint);
-
-		out << posPoint.x << "   " << posPoint.y << "   " << posPoint.z << "      " << gyroPoint.x << "   " << gyroPoint.y << "   " << gyroPoint.z << std::endl;
-
-
+		
 	}
 	file.close();
 	return 0;
