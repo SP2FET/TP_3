@@ -124,8 +124,8 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 
 	for (int i = 1; i < dataToDraw->size(); i++)
 	{
-		drawPointStart.X = ((i - 1)*zoom_x + drawArea.left) - scrollPos;
-		drawPointEnd.X = (i*zoom_x + drawArea.left) - scrollPos;
+		drawPointStart.X = ((i - 1)*zoom_x + drawArea.left) - scrollPos*2;
+		drawPointEnd.X = (i*zoom_x + drawArea.left) - scrollPos*2;
 
 		if (axesToDraw->X)
 		{

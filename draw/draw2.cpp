@@ -514,6 +514,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_ZOOM_X_IN:
 			dataLog->zoom_x++;
+			if (dataLog->zoom_x > 100) dataLog->zoom_x = 100;
 			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
 
 			
@@ -530,6 +531,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_ZOOM_X_OUT:
 			dataLog->zoom_x--;
+			if (dataLog->zoom_x < 1) dataLog->zoom_x = 1;
 			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
 			
 			
