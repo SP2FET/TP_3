@@ -43,6 +43,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	Buttons(HWND, UINT, WPARAM, LPARAM);
 
+void DrawDoubleBuffer(HWND hWnd);
 
 bool CALLBACK SetFont(HWND child, LPARAM font) {
 	SendMessage(child, WM_SETFONT, font, true);
@@ -59,12 +60,15 @@ void repaintWindow(HWND hWnd, HDC &hdc, PAINTSTRUCT &ps, RECT *drawArea)
 {
 
 	if (drawArea == NULL)
-		InvalidateRect(hWnd, NULL, TRUE); // repaint all
+		InvalidateRect(hWnd, NULL, FALSE); // repaint all
 	else
-		InvalidateRect(hWnd, drawArea, TRUE); //repaint drawArea
-	hdc = BeginPaint(hWnd, &ps);
-	MyOnPaint(hdc);
-	EndPaint(hWnd, &ps);
+		InvalidateRect(hWnd, drawArea, FALSE); //repaint drawArea
+	
+	DrawDoubleBuffer(hWnd);
+
+   //hdc = BeginPaint(hWnd, &ps);
+	//MyOnPaint(hdc);
+	//EndPaint(hWnd, &ps);
 }
 
 void inputData()
@@ -79,6 +83,7 @@ void inputData()
 int OnCreate(HWND window)
 {
 	inputData();
+
 	return 0;
 }
 
@@ -91,6 +96,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+
 
 	// TODO: Place code here.
 	MSG msg;
@@ -163,6 +169,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DRAW));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+	//wcex.hbrBackground = NULL;
 	wcex.lpszMenuName = MAKEINTRESOURCE(IDC_DRAW);
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -379,24 +386,26 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 void DrawDoubleBuffer(HWND hWnd)
 {
-
-	int winWidth = drawArea1.right - drawArea1.left;
-	int winHeight = drawArea1.bottom - drawArea1.top;
+	RECT Client_Rect;
+	GetClientRect(hWnd, &Client_Rect);
+	int win_width = Client_Rect.right - Client_Rect.left;
+	int win_height = Client_Rect.bottom + Client_Rect.left;
 	PAINTSTRUCT ps;
 	HDC Memhdc;
 	HDC hdc;
 	HBITMAP Membitmap;
 	hdc = BeginPaint(hWnd, &ps);
 	Memhdc = CreateCompatibleDC(hdc);
-	Membitmap = CreateCompatibleBitmap(hdc, winWidth, winHeight);
+	Membitmap = CreateCompatibleBitmap(hdc, win_width, win_height);
 	SelectObject(Memhdc, Membitmap);
-	//drawing code goes in here
-	dataLog->DrawGrid(hdc, drawArea1);
-	BitBlt(hdc, drawArea1.left, drawArea1.top, winWidth, winHeight, Memhdc, 0, 0, SRCCOPY);
+	
+	//FillRect(Memhdc, Membitmap, (HBRUSH)COLOR_WINDOW);
+	dataLog->Draw(Memhdc, drawArea1);
+	
+	BitBlt(hdc, 0, 0, win_width, win_height, Memhdc, 0, 0, SRCCOPY);
 	DeleteObject(Membitmap);
 	DeleteDC(Memhdc);
 	DeleteDC(hdc);
-
 	EndPaint(hWnd, &ps);
 }
 
@@ -456,7 +465,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
-
+	static bool erase = 1;
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -485,7 +494,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case ID_TIME_UP:
-			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			//repaintWindow(hWnd, hdc, ps, &drawArea1);
 			//EnableWindow(GetDlgItem(hWnd, ID_TIME_DOWN), FALSE);
 			break;
 		case ID_TIME_DOWN:
@@ -520,6 +529,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_CHECK_GYRO_Z:
 			CheckboxOnCheck(hWnd, ID_CHECK_GYRO_Z);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			//RedrawWindow(hWnd, &drawArea1, NULL, NULL);
 			break;
 		case ID_CHECK_POS_X:
 			CheckboxOnCheck(hWnd, ID_CHECK_POS_X);
@@ -532,6 +542,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_CHECK_POS_Z:
 			CheckboxOnCheck(hWnd, ID_CHECK_POS_Z);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			//RedrawWindow(hWnd, &drawArea1, NULL, NULL);
 			break;
 
 		default:
@@ -544,9 +555,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
-		dataLog->DrawGrid(hdc, drawArea1);
+		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		// TODO: Add any drawing code here (not depend on timer, buttons)
 		EndPaint(hWnd, &ps);
+		
+		break;
+	case WM_ERASEBKGND:
+		
+		return true;
 		break;
 	case WM_DESTROY:
 		delete dataLog;
@@ -600,7 +616,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case TMR_1:
 			//force window to repaint
-			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			//repaintWindow(hWnd, hdc, ps, &drawArea1);
 			value++;
 			break;
 		}
