@@ -28,7 +28,7 @@ INT value;
 
 // buttons
 HWND hwndButton;
-HWND hTrack, hTrack2;
+HWND hZoomY, hZoomX;
 HWND hScrollBar;
 // sent data
 int col = 0;
@@ -206,12 +206,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	// create button and store the handle    
 
 	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
-		TEXT("Draw/read"),                  // the caption of the button
+		TEXT("DISCARD SAMPLES"),                  // the caption of the button
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
 		0, 60,                                  // the left and top co-ordinates
 		80, 25,                              // width and height
 		hWnd,                                 // parent window handle
-		(HMENU)ID_TIME_UP,                   // the ID of your button
+		(HMENU)DISCARD_BTN,                   // the ID of your button
 		hInstance,                            // the instance of your application
 		NULL);                               // extra bits you dont really need
 
@@ -302,25 +302,25 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Y), FALSE);
 	EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Z), FALSE);
 
-	hTrack = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM Control",
+	hZoomY = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM Control",
 		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_VERT | TBS_DOWNISLEFT,
 		300, 60, 30, 300, hWnd, (HMENU)3, NULL, NULL);
 
-	SendMessageW(hTrack, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_Y));
-	SendMessageW(hTrack, TBM_SETPAGESIZE, 0, 1);
-	SendMessageW(hTrack, TBM_SETTICFREQ, 5, 0);
-	SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - 1);
+	SendMessageW(hZoomY, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_Y));
+	SendMessageW(hZoomY, TBM_SETPAGESIZE, 0, 1);
+	SendMessageW(hZoomY, TBM_SETTICFREQ, 5, 0);
+	SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - 1);
 	//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
 	//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
 
-	hTrack2 = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM X Control",
+	hZoomX = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM X Control",
 		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_HORZ,
 		410, 420, 270, 30, hWnd, (HMENU)3, NULL, NULL);
 
-	SendMessageW(hTrack2, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_X));
-	SendMessageW(hTrack2, TBM_SETPAGESIZE, 0, 1);
-	SendMessageW(hTrack2, TBM_SETTICFREQ, 5, 0);
-	SendMessageW(hTrack2, TBM_SETPOS, TRUE, 1);
+	SendMessageW(hZoomX, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_X));
+	SendMessageW(hZoomX, TBM_SETPAGESIZE, 0, 1);
+	SendMessageW(hZoomX, TBM_SETTICFREQ, 5, 0);
+	SendMessageW(hZoomX, TBM_SETPOS, TRUE, 1);
 
 	hScrollBar = CreateWindow(TEXT("SCROLLBAR"),
 		NULL, WS_CHILD | WS_VISIBLE,
@@ -328,12 +328,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	SCROLLINFO si;
 	ZeroMemory(&si, sizeof(si));
-
 	si.cbSize = sizeof(SCROLLINFO);
-	si.fMask = SIF_RANGE | SIF_POS;
+	si.fMask = SIF_RANGE | SIF_PAGE;
 	si.nMin = 0;
-	si.nMax = 1000;
-	si.nPos = 0;
+	si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
+	si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
+
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 
 	hwndButton = CreateWindow(TEXT("button"), TEXT("Timer ON"),
@@ -344,6 +344,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
 		0, 200, 100, 30, hWnd, (HMENU)ID_RBUTTON2, GetModuleHandle(NULL), NULL);
 
+
+	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Axis to plot"),
+		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
+		80, 3, 150, 100,
+		hWnd, NULL, hInstance, 0);
 	/*hwndButton = CreateWindow(TEXT("button"), TEXT("Graph"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
 		600,0, 500, 500, hWnd, (HMENU)ID_GROUP1, GetModuleHandle(NULL), NULL);*/
@@ -494,7 +499,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
-		case ID_TIME_UP:
+		case DISCARD_BTN:
 			//repaintWindow(hWnd, hdc, ps, &drawArea1);
 			//EnableWindow(GetDlgItem(hWnd, ID_TIME_DOWN), FALSE);
 			break;
@@ -504,44 +509,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_ZOOM_IN:
 			dataLog->ChangeZoom(5, TRUE);
-			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoom_y);
+			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoomY);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_OUT:
 			dataLog->ChangeZoom(5, FALSE);
-			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoom_y);
+			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoomY);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_X_IN:
-			dataLog->zoom_x++;
-			if (dataLog->zoom_x > 100) dataLog->zoom_x = 100;
-			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
+			dataLog->zoomX++;
+			if (dataLog->zoomX > 100) dataLog->zoomX = 100;
+			SendMessageW(hZoomX, TBM_SETPOS, TRUE, dataLog->zoomX);
 
-			
 			ZeroMemory(&si, sizeof(si));
-
 			si.cbSize = sizeof(SCROLLINFO);
 			si.fMask = SIF_RANGE | SIF_PAGE;
 			si.nMin = 0;
-			si.nMax = dataLog->dataSize + dataLog->zoom_x;
-			si.nPage = (dataLog->dataSize + dataLog->zoom_x) / dataLog->zoom_x;
+			si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
+			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
 
 			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_X_OUT:
-			dataLog->zoom_x--;
-			if (dataLog->zoom_x < 1) dataLog->zoom_x = 1;
-			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
-			
-			
-			ZeroMemory(&si, sizeof(si));
 
+			dataLog->zoomX--;
+			if (dataLog->zoomX < 1) dataLog->zoomX = 1;
+			SendMessageW(hZoomX, TBM_SETPOS, TRUE, dataLog->zoomX);
+
+			ZeroMemory(&si, sizeof(si));
 			si.cbSize = sizeof(SCROLLINFO);
 			si.fMask = SIF_RANGE | SIF_PAGE;
 			si.nMin = 0;
-			si.nMax = dataLog->dataSize + dataLog->zoom_x;
-			si.nPage = (dataLog->dataSize + dataLog->zoom_x) / dataLog->zoom_x;
+			si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
+			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
 
 			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
@@ -606,14 +608,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 		EnumChildWindows(hWnd, (WNDENUMPROC)SetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
-
 		break;
 
 	case WM_VSCROLL:
-
-		dataLog->zoom_y = 100 - SendMessageW(hTrack, TBM_GETPOS, 0, 0);
+		dataLog->zoomY = 100 - SendMessageW(hZoomY, TBM_GETPOS, 0, 0);
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		break;
+
 	case WM_HSCROLL:
 		if (lParam == (LPARAM)hScrollBar)
 		{
@@ -641,14 +642,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			dataLog->zoom_x = SendMessageW(hTrack2, TBM_GETPOS, 0, 0);
+			dataLog->zoomX = SendMessageW(hZoomX, TBM_GETPOS, 0, 0);
 			ZeroMemory(&si, sizeof(si));
 
 			si.cbSize = sizeof(SCROLLINFO);
 			si.fMask = SIF_RANGE | SIF_PAGE;
 			si.nMin = 0;
-			si.nMax = dataLog->dataSize + dataLog->zoom_x;
-			si.nPage = (dataLog->dataSize + dataLog->zoom_x)/dataLog->zoom_x;
+			si.nMax = dataLog->dataSize*dataLog->zoomX / 2;
+			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
 
 			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 

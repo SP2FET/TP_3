@@ -41,8 +41,8 @@ private:
 	
 
 public:
-	double zoom_y;
-	double zoom_x;
+	double zoomY;
+	double zoomX;
 	int scrollPos;
 	int dataSize;
 	TAxesToDraw axesToDrawGyro, axesToDrawPos;

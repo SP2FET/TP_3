@@ -23,8 +23,8 @@ CData::CData(HWND hWnd)
 	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-	zoom_y = 1;
-	zoom_x = 1;
+	zoomY = 1;
+	zoomX = 1;
 	scrollPos = 0;
 
 	axesToDrawGyro.axes = 0;
@@ -124,25 +124,25 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 
 	for (int i = 1; i < dataToDraw->size(); i++)
 	{
-		drawPointStart.X = ((i - 1)*zoom_x + drawArea.left) - scrollPos*2;
-		drawPointEnd.X = (i*zoom_x + drawArea.left) - scrollPos*2;
+		drawPointStart.X = ((i - 1)*zoomX + drawArea.left) - scrollPos*2;
+		drawPointEnd.X = (i*zoomX + drawArea.left) - scrollPos*2;
 
 		if (axesToDraw->X)
 		{
-			drawPointStart.Y = (*dataToDraw)[i - 1].x * zoom_y + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].x * zoom_y + drawYOffset;
+			drawPointStart.Y = (*dataToDraw)[i - 1].x * zoomY + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].x * zoomY + drawYOffset;
 			graphics.DrawLine(&pen, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 		if (axesToDraw->Y)
 		{
-			drawPointStart.Y = (*dataToDraw)[i - 1].y * zoom_y + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].y * zoom_y + drawYOffset;
+			drawPointStart.Y = (*dataToDraw)[i - 1].y * zoomY + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].y * zoomY + drawYOffset;
 			graphics.DrawLine(&pen2, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 		if (axesToDraw->Z)
 		{
-			drawPointStart.Y = (*dataToDraw)[i - 1].z * zoom_y + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].z * zoom_y + drawYOffset;
+			drawPointStart.Y = (*dataToDraw)[i - 1].z * zoomY + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].z * zoomY + drawYOffset;
 			graphics.DrawLine(&pen3, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 
@@ -209,11 +209,11 @@ void CData::DiscardSamples(int amountOfSamples)
 
 void CData::ChangeZoom(double amount, bool plusOrMinus)
 {
-	if (plusOrMinus) zoom_y += amount;
-	else zoom_y -= amount;
+	if (plusOrMinus) zoomY += amount;
+	else zoomY -= amount;
 
-	if (zoom_y > 100) zoom_y = 100;
-	if (zoom_y < 0)zoom_y = 0;
+	if (zoomY > 100) zoomY = 100;
+	if (zoomY < 0)zoomY = 1;
 
 }
 

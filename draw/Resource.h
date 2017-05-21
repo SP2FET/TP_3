@@ -13,7 +13,7 @@
 #define IDC_DRAW                        109
 #define IDR_MAINFRAME                   128
 #define IDR_ACCELERATOR1                129
-#define ID_TIME_UP                      200
+#define DISCARD_BTN                      200
 #define ID_TIME_DOWN                    201
 #define ID_ZOOM_IN                      202
 #define ID_ZOOM_OUT                     203
