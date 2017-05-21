@@ -208,8 +208,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
 		TEXT("DISCARD SAMPLES"),                  // the caption of the button
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
-		0, 60,                                  // the left and top co-ordinates
-		80, 25,                              // width and height
+		100, 170,                                  // the left and top co-ordinates
+		110, 25,                              // width and height
 		hWnd,                                 // parent window handle
 		(HMENU)DISCARD_BTN,                   // the ID of your button
 		hInstance,                            // the instance of your application
@@ -306,7 +306,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_VERT | TBS_DOWNISLEFT,
 		300, 60, 30, 300, hWnd, (HMENU)3, NULL, NULL);
 
-	SendMessageW(hZoomY, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_Y));
+	SendMessageW(hZoomY, TBM_SETRANGE, TRUE, MAKELONG(0, MAX_ZOOM_Y-1));
 	SendMessageW(hZoomY, TBM_SETPAGESIZE, 0, 1);
 	SendMessageW(hZoomY, TBM_SETTICFREQ, 5, 0);
 	SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - 1);
@@ -349,6 +349,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
 		80, 3, 150, 100,
 		hWnd, NULL, hInstance, 0);
+
+	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Samples to discard"),
+		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
+		80, 120, 150, 100,
+		hWnd, NULL, hInstance, 0);
+
+	HWND hText = CreateWindow(TEXT("EDIT"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
+		130, 140, 50, 20, hWnd, NULL, hInstance, NULL);
 	/*hwndButton = CreateWindow(TEXT("button"), TEXT("Graph"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
 		600,0, 500, 500, hWnd, (HMENU)ID_GROUP1, GetModuleHandle(NULL), NULL);*/

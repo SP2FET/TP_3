@@ -124,8 +124,8 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 
 	for (int i = 1; i < dataToDraw->size(); i++)
 	{
-		drawPointStart.X = ((i - 1)*zoomX + drawArea.left) - scrollPos*2;
-		drawPointEnd.X = (i*zoomX + drawArea.left) - scrollPos*2;
+		drawPointStart.X = ((i - 1)*zoomX + drawArea.left) - scrollPos * 2;
+		drawPointEnd.X = (i*zoomX + drawArea.left) - scrollPos * 2;
 
 		if (axesToDraw->X)
 		{
@@ -183,14 +183,13 @@ bool CData::Read()
 
 		iss >> gyroPoint.x >> gyroPoint.y >> gyroPoint.z;
 
-		posPoint.x += gyroPoint.x * SAMPLE_TIME_RES; ///!!!
-		posPoint.y += gyroPoint.y * SAMPLE_TIME_RES;
-		posPoint.z += gyroPoint.z * SAMPLE_TIME_RES;
+		
 
-		posData.push_back(posPoint);
+		//posData.push_back(posPoint);
 		gyroData.push_back(gyroPoint);
 
 	}
+	posData = Integrate(gyroData);
 	file.close();
 	dataSize = posData.size();
 	return 0;
@@ -215,6 +214,24 @@ void CData::ChangeZoom(double amount, bool plusOrMinus)
 	if (zoomY > 100) zoomY = 100;
 	if (zoomY < 0)zoomY = 1;
 
+}
+
+std::vector<Point3D>& CData::Integrate(std::vector<Point3D> dataVector)
+{
+	Point3D  integratedPoint;
+	std::vector<Point3D> integratedVector;
+
+	integratedPoint.x = 0;
+	integratedPoint.y = 0;
+	integratedPoint.z = 0;
+	for (auto index : dataVector)
+	{
+		integratedPoint.x += index.x * SAMPLE_TIME_RES;
+		integratedPoint.y += index.y * SAMPLE_TIME_RES;
+		integratedPoint.z += index.z * SAMPLE_TIME_RES;
+		integratedVector.push_back(integratedPoint);
+	}
+	return integratedVector;
 }
 
 CData::~CData()
