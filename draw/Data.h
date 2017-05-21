@@ -1,6 +1,8 @@
 #pragma once
 //#include <fstream>
 
+#define SAMPLE_TIME_RES 1/25
+
 union Point3D
 {
 	double point3D[3];
@@ -39,7 +41,9 @@ private:
 	
 
 public:
-	double zoom;
+	double zoom_y;
+	double zoom_x;
+	int scrollPos;
 	TAxesToDraw axesToDrawGyro, axesToDrawPos;
 	int drawingMode;
 	CData(HWND hWnd);

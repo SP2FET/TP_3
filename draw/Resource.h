@@ -17,6 +17,8 @@
 #define ID_TIME_DOWN                    201
 #define ID_ZOOM_IN                      202
 #define ID_ZOOM_OUT                     203
+#define ID_ZOOM_X_IN                    204
+#define ID_ZOOM_X_OUT                   205
 #define ID_RBUTTON1                     210
 #define ID_RBUTTON2                     211
 #define ID_CHECK_GYRO_X	                600

@@ -23,7 +23,9 @@ CData::CData(HWND hWnd)
 	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-	zoom = 1;
+	zoom_y = 1;
+	zoom_x = 1;
+	scrollPos = 0;
 
 	axesToDrawGyro.axes = 0;
 	axesToDrawPos.axes = 0;
@@ -40,10 +42,10 @@ bool CData::Open()
 		if (file.is_open())
 		{
 			SetWindowText(*PhWnd, ofn.lpstrFile);
-			
+
 			Read();
 
-			
+
 
 			MessageBox(0, ofn.lpstrFile, TEXT("File opened!"), MB_ICONINFORMATION | MB_OK);
 #ifdef DEBUG
@@ -65,11 +67,11 @@ bool CData::DrawGrid(HDC hdc, RECT drawArea)
 {
 	Graphics graphics(hdc);
 	Pen pen2(Color(255, 153, 153, 153));
-	
+
 	Rectangle(hdc, drawArea.left, drawArea.top, drawArea.right, drawArea.bottom);
 	graphics.DrawLine(&pen2, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.top, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.bottom);
 	graphics.DrawLine(&pen2, drawArea.left, (drawArea.bottom - drawArea.top) / 2 + drawArea.top, drawArea.right, (drawArea.bottom - drawArea.top) / 2 + drawArea.top);
-	
+
 	return 0;
 }
 void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
@@ -116,34 +118,31 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 	//	return;
 	//	break;
 	//}
-	
+
 
 	graphics.SetSmoothingMode(SmoothingModeHighQuality);
 
 	for (int i = 1; i < dataToDraw->size(); i++)
 	{
-		if(axesToDraw->X)
-		{ 
-			drawPointStart.Y = (*dataToDraw)[i - 1].x * zoom + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].x * zoom + drawYOffset;
-			drawPointStart.X = i - 1 + drawArea.left;
-			drawPointEnd.X = i + drawArea.left;
+		drawPointStart.X = ((i - 1)*zoom_x + drawArea.left) - scrollPos;
+		drawPointEnd.X = (i*zoom_x + drawArea.left) - scrollPos;
+
+		if (axesToDraw->X)
+		{
+			drawPointStart.Y = (*dataToDraw)[i - 1].x * zoom_y + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].x * zoom_y + drawYOffset;
 			graphics.DrawLine(&pen, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 		if (axesToDraw->Y)
 		{
-			drawPointStart.Y = (*dataToDraw)[i - 1].y * zoom + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].y * zoom + drawYOffset;
-			drawPointStart.X = i - 1 + drawArea.left;
-			drawPointEnd.X = i + drawArea.left;
+			drawPointStart.Y = (*dataToDraw)[i - 1].y * zoom_y + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].y * zoom_y + drawYOffset;
 			graphics.DrawLine(&pen2, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 		if (axesToDraw->Z)
 		{
-			drawPointStart.Y = (*dataToDraw)[i - 1].z * zoom + drawYOffset;
-			drawPointEnd.Y = (*dataToDraw)[i].z * zoom + drawYOffset;
-			drawPointStart.X = i - 1 + drawArea.left;
-			drawPointEnd.X = i + drawArea.left;
+			drawPointStart.Y = (*dataToDraw)[i - 1].z * zoom_y + drawYOffset;
+			drawPointEnd.Y = (*dataToDraw)[i].z * zoom_y + drawYOffset;
 			graphics.DrawLine(&pen3, drawPointStart.X, drawPointStart.Y, drawPointEnd.X, drawPointEnd.Y);
 		}
 
@@ -151,11 +150,11 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 }
 bool CData::Draw(HDC hdc, RECT drawArea)
 {
-	
+
 
 	DrawGrid(hdc, drawArea);
-	DrawCurve(hdc, drawArea,TRUE);
-	DrawCurve(hdc, drawArea,FALSE);
+	DrawCurve(hdc, drawArea, TRUE);
+	DrawCurve(hdc, drawArea, FALSE);
 	//graphics.DrawRectangle(&pen, 50 + value, 400, 10, 20);
 	return 0;
 }
@@ -165,10 +164,10 @@ bool CData::Read()
 	std::string line;
 
 	double dummy;
-	Point3D gyroPoint,posPoint;
+	Point3D gyroPoint, posPoint;
 
-	for(int i=0; i<3; i++)         // zerowanie punktów
-	{ 
+	for (int i = 0; i < 3; i++)         // zerowanie punktów
+	{
 		gyroPoint.point3D[i] = 0;
 		posPoint.point3D[i] = 0;
 	}
@@ -178,6 +177,7 @@ bool CData::Read()
 	{
 		std::istringstream iss(line); // access line as a stream
 
+		iss >> dummy >> dummy >> dummy; //olanie polozenia
 		iss >> dummy >> dummy >> dummy; //olanie akcelerometru
 		iss >> dummy >> dummy >> dummy; // i magnetometru
 
@@ -187,9 +187,9 @@ bool CData::Read()
 		posPoint.y += gyroPoint.y * SAMPLE_TIME_RES;
 		posPoint.z += gyroPoint.z * SAMPLE_TIME_RES;
 
-		posData.push_back(posPoint);		
+		posData.push_back(posPoint);
 		gyroData.push_back(gyroPoint);
-		
+
 	}
 	file.close();
 	return 0;
@@ -208,11 +208,11 @@ void CData::DiscardSamples(int amountOfSamples)
 
 void CData::ChangeZoom(double amount, bool plusOrMinus)
 {
-	if (plusOrMinus) zoom += amount;
-	else zoom -= amount;
+	if (plusOrMinus) zoom_y += amount;
+	else zoom_y -= amount;
 
-	if (zoom > 100) zoom = 100;
-	if (zoom < 0)zoom = 0;
+	if (zoom_y > 100) zoom_y = 100;
+	if (zoom_y < 0)zoom_y = 0;
 
 }
 

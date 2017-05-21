@@ -14,7 +14,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #define MAX_LOADSTRING 100
 #define TMR_1 1
 
-const int MAX_ZOOM = 100;
+const int MAX_ZOOM_Y = 100;
+const int MAX_ZOOM_X = 50;
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -27,7 +28,8 @@ INT value;
 
 // buttons
 HWND hwndButton;
-HWND hTrack;
+HWND hTrack, hTrack2;
+HWND hScrollBar;
 // sent data
 int col = 0;
 std::vector<Point> data;
@@ -190,7 +192,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	// main window
 	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, 800, 480, NULL, NULL, hInstance, NULL);
+		CW_USEDEFAULT, 0, 800, 600, NULL, NULL, hInstance, NULL);
 
 	dataLog = new CData(hWnd);
 
@@ -235,6 +237,24 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		(HMENU)ID_ZOOM_OUT,                   // the ID of your button
 		hInstance,                            // the instance of your application
 		NULL);
+	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
+		TEXT("Zoom X IN"),                  // the caption of the button
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
+		345, 420,                                  // the left and top co-ordinates
+		60, 25,                              // width and height
+		hWnd,                                 // parent window handle
+		(HMENU)ID_ZOOM_X_IN,                   // the ID of your button
+		hInstance,                            // the instance of your application
+		NULL);
+	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
+		TEXT("Zoom X OUT"),                  // the caption of the button
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
+		682, 420,                                  // the left and top co-ordinates
+		70, 25,                              // width and height
+		hWnd,                                 // parent window handle
+		(HMENU)ID_ZOOM_X_OUT,                   // the ID of your button
+		hInstance,                            // the instance of your application
+		NULL);
 	// create button and store the handle                                                       
 
 	/*HWND hLeftLabel = CreateWindowW(L"Static", L"100",
@@ -244,27 +264,27 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_CHILD | WS_VISIBLE, 0, 0, 10, 20, hWnd, (HMENU)2, NULL, NULL);*/
 
 	CreateWindowW(L"button", L"Gyro X",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		100, 20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Y",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		100, 40, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Z",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		100, 60, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Z,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos X",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		160, 20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Y",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		160, 40, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Z",
-		WS_VISIBLE |WS_CHILD | BS_CHECKBOX,
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		160, 60, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
 		NULL, NULL);
 
@@ -279,12 +299,35 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_VERT | TBS_DOWNISLEFT,
 		300, 60, 30, 300, hWnd, (HMENU)3, NULL, NULL);
 
-	SendMessageW(hTrack, TBM_SETRANGE, TRUE, MAKELONG(0, MAX_ZOOM));
+	SendMessageW(hTrack, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_Y));
 	SendMessageW(hTrack, TBM_SETPAGESIZE, 0, 1);
 	SendMessageW(hTrack, TBM_SETTICFREQ, 5, 0);
-	SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM - 1);
+	SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - 1);
 	//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
 	//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
+
+	hTrack2 = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM X Control",
+		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_HORZ,
+		410, 420, 270, 30, hWnd, (HMENU)3, NULL, NULL);
+
+	SendMessageW(hTrack2, TBM_SETRANGE, TRUE, MAKELONG(1, MAX_ZOOM_X));
+	SendMessageW(hTrack2, TBM_SETPAGESIZE, 0, 1);
+	SendMessageW(hTrack2, TBM_SETTICFREQ, 5, 0);
+	SendMessageW(hTrack2, TBM_SETPOS, TRUE, 1);
+
+	hScrollBar = CreateWindow(TEXT("SCROLLBAR"),
+		NULL, WS_CHILD | WS_VISIBLE,
+		410, 470, 220, 21, hWnd, NULL, hInstance, NULL);
+
+	SCROLLINFO si;
+	ZeroMemory(&si, sizeof(si));
+
+	si.cbSize = sizeof(SCROLLINFO);
+	si.fMask = SIF_RANGE | SIF_POS;
+	si.nMin = 0;
+	si.nMax = 1000;
+	si.nPos = 0;
+	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 
 	hwndButton = CreateWindow(TEXT("button"), TEXT("Timer ON"),
 		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
@@ -357,9 +400,9 @@ void DrawDoubleBuffer(HWND hWnd)
 	EndPaint(hWnd, &ps);
 }
 
-void CheckboxOnCheck(HWND hWnd,int id)
+void CheckboxOnCheck(HWND hWnd, int id)
 {
-	
+
 	bool *actualAxis;
 	switch (id)
 	{
@@ -392,7 +435,7 @@ void CheckboxOnCheck(HWND hWnd,int id)
 		actualAxis = &dataLog->axesToDrawPos.Z;
 		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
 		else dataLog->drawingMode = pos;
-		
+
 		break;
 	}
 
@@ -420,7 +463,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wmId = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
 
-		
+
 
 		// MENU & BUTTON messages
 		// Parse the menu selections:
@@ -451,12 +494,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_ZOOM_IN:
 			dataLog->ChangeZoom(5, TRUE);
-			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM - dataLog->zoom);
+			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoom_y);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_OUT:
 			dataLog->ChangeZoom(5, FALSE);
-			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM - dataLog->zoom);
+			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoom_y);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_RBUTTON1:
@@ -512,12 +555,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 		EnumChildWindows(hWnd, (WNDENUMPROC)SetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
-		
+
 		break;
 
 	case WM_VSCROLL:
 
-		dataLog->zoom = 100 - SendMessageW(hTrack, TBM_GETPOS, 0, 0);
+		dataLog->zoom_y = 100 - SendMessageW(hTrack, TBM_GETPOS, 0, 0);
+		repaintWindow(hWnd, hdc, ps, &drawArea1);
+		break;
+	case WM_HSCROLL:
+		if (lParam == (LPARAM)hScrollBar)
+		{
+			int position;
+			switch (LOWORD(wParam))
+			{
+			case SB_LINEUP:
+				position = GetScrollPos((HWND)lParam, SB_CTL);
+				if (position > 0)position--;
+				SetScrollPos((HWND)lParam, SB_CTL, position, true);
+				break;
+			case SB_LINEDOWN:
+				position = GetScrollPos((HWND)lParam, SB_CTL);
+				if (position < 1000)position++;
+				SetScrollPos((HWND)lParam, SB_CTL, position, true);
+				break;
+			case SB_THUMBTRACK:
+				SetScrollPos(hScrollBar, SB_CTL, HIWORD(wParam), true);
+				
+				break;
+			default:
+				break;
+			}
+			dataLog->scrollPos = GetScrollPos((HWND)lParam, SB_CTL);
+		}
+		else
+		{
+			dataLog->zoom_x = SendMessageW(hTrack2, TBM_GETPOS, 0, 0);
+			
+		}
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		break;
 	case WM_TIMER:
