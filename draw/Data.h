@@ -44,6 +44,7 @@ public:
 	double zoom_y;
 	double zoom_x;
 	int scrollPos;
+	int dataSize;
 	TAxesToDraw axesToDrawGyro, axesToDrawPos;
 	int drawingMode;
 	CData(HWND hWnd);

@@ -192,6 +192,7 @@ bool CData::Read()
 
 	}
 	file.close();
+	dataSize = posData.size();
 	return 0;
 }
 

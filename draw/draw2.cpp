@@ -63,12 +63,12 @@ void repaintWindow(HWND hWnd, HDC &hdc, PAINTSTRUCT &ps, RECT *drawArea)
 		InvalidateRect(hWnd, NULL, FALSE); // repaint all
 	else
 		InvalidateRect(hWnd, drawArea, FALSE); //repaint drawArea
-	
+
 	DrawDoubleBuffer(hWnd);
 
-   //hdc = BeginPaint(hWnd, &ps);
-	//MyOnPaint(hdc);
-	//EndPaint(hWnd, &ps);
+	//hdc = BeginPaint(hWnd, &ps);
+	 //MyOnPaint(hdc);
+	 //EndPaint(hWnd, &ps);
 }
 
 void inputData()
@@ -324,7 +324,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	hScrollBar = CreateWindow(TEXT("SCROLLBAR"),
 		NULL, WS_CHILD | WS_VISIBLE,
-		410, 470, 220, 21, hWnd, NULL, hInstance, NULL);
+		410, 470, 270, 21, hWnd, NULL, hInstance, NULL);
 
 	SCROLLINFO si;
 	ZeroMemory(&si, sizeof(si));
@@ -398,10 +398,10 @@ void DrawDoubleBuffer(HWND hWnd)
 	Memhdc = CreateCompatibleDC(hdc);
 	Membitmap = CreateCompatibleBitmap(hdc, win_width, win_height);
 	SelectObject(Memhdc, Membitmap);
-	
+
 	FillRect(Memhdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW));
 	dataLog->Draw(Memhdc, drawArea1);
-	
+
 	BitBlt(hdc, 0, 0, win_width, win_height, Memhdc, 0, 0, SRCCOPY);
 	DeleteObject(Membitmap);
 	DeleteDC(Memhdc);
@@ -465,6 +465,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
+	SCROLLINFO si;
 	static bool erase = 1;
 	switch (message)
 	{
@@ -509,6 +510,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_ZOOM_OUT:
 			dataLog->ChangeZoom(5, FALSE);
 			SendMessageW(hTrack, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoom_y);
+			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			break;
+		case ID_ZOOM_X_IN:
+			dataLog->zoom_x++;
+			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
+
+			
+			ZeroMemory(&si, sizeof(si));
+
+			si.cbSize = sizeof(SCROLLINFO);
+			si.fMask = SIF_RANGE | SIF_PAGE;
+			si.nMin = 0;
+			si.nMax = dataLog->dataSize + dataLog->zoom_x;
+			si.nPage = (dataLog->dataSize + dataLog->zoom_x) / dataLog->zoom_x;
+
+			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+			repaintWindow(hWnd, hdc, ps, &drawArea1);
+			break;
+		case ID_ZOOM_X_OUT:
+			dataLog->zoom_x--;
+			SendMessageW(hTrack2, TBM_SETPOS, TRUE, dataLog->zoom_x);
+			
+			
+			ZeroMemory(&si, sizeof(si));
+
+			si.cbSize = sizeof(SCROLLINFO);
+			si.fMask = SIF_RANGE | SIF_PAGE;
+			si.nMin = 0;
+			si.nMax = dataLog->dataSize + dataLog->zoom_x;
+			si.nPage = (dataLog->dataSize + dataLog->zoom_x) / dataLog->zoom_x;
+
+			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_RBUTTON1:
@@ -559,10 +592,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		// TODO: Add any drawing code here (not depend on timer, buttons)
 		EndPaint(hWnd, &ps);
-		
+
 		break;
 	case WM_ERASEBKGND:
-		
 		return true;
 		break;
 	case WM_DESTROY:
@@ -598,7 +630,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case SB_THUMBTRACK:
 				SetScrollPos(hScrollBar, SB_CTL, HIWORD(wParam), true);
-				
+
 				break;
 			default:
 				break;
@@ -608,7 +640,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			dataLog->zoom_x = SendMessageW(hTrack2, TBM_GETPOS, 0, 0);
-			
+			ZeroMemory(&si, sizeof(si));
+
+			si.cbSize = sizeof(SCROLLINFO);
+			si.fMask = SIF_RANGE | SIF_PAGE;
+			si.nMin = 0;
+			si.nMax = dataLog->dataSize + dataLog->zoom_x;
+			si.nPage = (dataLog->dataSize + dataLog->zoom_x)/dataLog->zoom_x;
+
+			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+
 		}
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		break;
