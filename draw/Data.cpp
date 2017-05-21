@@ -224,11 +224,11 @@ std::vector<Point3D> CData::Integrate(std::vector<Point3D> dataVector)
 	integratedPoint.x = 0;
 	integratedPoint.y = 0;
 	integratedPoint.z = 0;
-	for (auto index : dataVector)
+	for (auto point : dataVector)
 	{
-		integratedPoint.x += index.x * SAMPLE_TIME_RES;
-		integratedPoint.y += index.y * SAMPLE_TIME_RES;
-		integratedPoint.z += index.z * SAMPLE_TIME_RES;
+		integratedPoint.x += point.x * SAMPLE_TIME_RES;
+		integratedPoint.y += point.y * SAMPLE_TIME_RES;
+		integratedPoint.z += point.z * SAMPLE_TIME_RES;
 		integratedVector.push_back(integratedPoint);
 	}
 

@@ -13,7 +13,8 @@
 #define IDC_DRAW                        109
 #define IDR_MAINFRAME                   128
 #define IDR_ACCELERATOR1                129
-#define DISCARD_BTN                      200
+#define IDD_DELETE                      130
+#define DISCARD_BTN                     200
 #define ID_TIME_DOWN                    201
 #define ID_ZOOM_IN                      202
 #define ID_ZOOM_OUT                     203
@@ -21,16 +22,18 @@
 #define ID_ZOOM_X_OUT                   205
 #define ID_RBUTTON1                     210
 #define ID_RBUTTON2                     211
-#define ID_CHECK_GYRO_X	                600
-#define ID_CHECK_GYRO_Y	                601
-#define ID_CHECK_GYRO_Z	                602
-#define ID_CHECK_POS_X	                603
-#define ID_CHECK_POS_Y	                604
-#define ID_CHECK_POS_Z	                605
-
 #define ID_LABEL1                       300
 #define ID_GROUP1                       400
 #define IDM_FILE_OPEN                   500
+#define ID_CHECK_GYRO_X                 600
+#define ID_CHECK_GYRO_Y                 601
+#define ID_CHECK_GYRO_Z                 602
+#define ID_CHECK_POS_X                  603
+#define ID_CHECK_POS_Y                  604
+#define ID_CHECK_POS_Z                  605
+#define ID_NO                           1000
+#define ID_YES                          1001
+#define IDC_DISCARD_TEXT                1002
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -38,9 +41,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

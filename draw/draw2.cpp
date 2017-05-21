@@ -24,7 +24,7 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
 CData *dataLog;
 
-INT value;
+INT samplesToDiscard;
 
 // buttons
 HWND hwndButton;
@@ -40,6 +40,7 @@ RECT drawArea2 = { 50, 400, 650, 422 };
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK		DlgProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	Buttons(HWND, UINT, WPARAM, LPARAM);
 
@@ -102,7 +103,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	MSG msg;
 	HACCEL hAccelTable;
 
-	value = 0;
+	
 
 	GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR           gdiplusToken;
@@ -140,7 +141,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	return (int)msg.wParam;
 }
 
+void DiscardHandler(HWND hWnd)
+{
+	
 
+
+	int ret = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DELETE), hWnd, DlgProc);
+	if (ret == ID_YES)
+		dataLog->DiscardSamples(samplesToDiscard);
+}
 
 //
 //  FUNCTION: MyRegisterClass()
@@ -479,7 +488,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 	SCROLLINFO si;
-	static bool erase = 1;
+	int ret = 0;
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -509,7 +518,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case DISCARD_BTN:
 			//repaintWindow(hWnd, hdc, ps, &drawArea1);
-			//EnableWindow(GetDlgItem(hWnd, ID_TIME_DOWN), FALSE);
+			DiscardHandler(hWnd);
+
 			break;
 		case ID_TIME_DOWN:
 			//repaintWindow(hWnd, hdc, ps, NULL);
@@ -670,7 +680,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case TMR_1:
 			//force window to repaint
 			//repaintWindow(hWnd, hdc, ps, &drawArea1);
-			value++;
+			
 			break;
 		}
 
@@ -679,6 +689,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
+BOOL CALLBACK DlgProc(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	TCHAR buffer[60];
+	
+	switch (Msg)
+	{
+	case WM_COMMAND:
+	{
+		
+		// reakcja na przyciski
+		switch (LOWORD(wParam))
+		{
+		case ID_YES: EndDialog(hwnd, ID_YES); break;
+		case ID_NO: EndDialog(hwnd, ID_NO); break;
+		}
+	}
+	case WM_INITDIALOG:
+	
+		swprintf_s(buffer, L"Do you really want to DELETE %d first samples?", samplesToDiscard);
+		SetWindowText(GetDlgItem(hwnd, 1002), buffer);
+	break;
+		
+	break;
+	
+	default: return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 // Message handler for about box.
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
