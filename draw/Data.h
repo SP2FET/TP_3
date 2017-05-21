@@ -56,7 +56,7 @@ public:
 	void DiscardSamples(std::vector<Point3D> dataVector, int amountOfSamples);
 	void DiscardSamples(int amountOfSamples);
 	void ChangeZoom(double amount, bool plusOrMinus);
-	std::vector<Point3D>& Integrate(std::vector<Point3D> dataVector);
+	std::vector<Point3D> Integrate(std::vector<Point3D> dataVector);
 	~CData();
 };
 

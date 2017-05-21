@@ -216,7 +216,7 @@ void CData::ChangeZoom(double amount, bool plusOrMinus)
 
 }
 
-std::vector<Point3D>& CData::Integrate(std::vector<Point3D> dataVector)
+std::vector<Point3D> CData::Integrate(std::vector<Point3D> dataVector)
 {
 	Point3D  integratedPoint;
 	std::vector<Point3D> integratedVector;
@@ -231,6 +231,7 @@ std::vector<Point3D>& CData::Integrate(std::vector<Point3D> dataVector)
 		integratedPoint.z += index.z * SAMPLE_TIME_RES;
 		integratedVector.push_back(integratedPoint);
 	}
+
 	return integratedVector;
 }
 
