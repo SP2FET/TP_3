@@ -399,7 +399,7 @@ void DrawDoubleBuffer(HWND hWnd)
 	Membitmap = CreateCompatibleBitmap(hdc, win_width, win_height);
 	SelectObject(Memhdc, Membitmap);
 	
-	//FillRect(Memhdc, Membitmap, (HBRUSH)COLOR_WINDOW);
+	FillRect(Memhdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW));
 	dataLog->Draw(Memhdc, drawArea1);
 	
 	BitBlt(hdc, 0, 0, win_width, win_height, Memhdc, 0, 0, SRCCOPY);
@@ -555,6 +555,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
+		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW));
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		// TODO: Add any drawing code here (not depend on timer, buttons)
 		EndPaint(hWnd, &ps);
