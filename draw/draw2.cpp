@@ -152,7 +152,11 @@ void DiscardHandler(HWND hWnd)
 
 	int ret = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DELETE), hWnd, DlgProc);
 	if (ret == ID_YES)
+	{
 		dataLog->DiscardSamples(samplesToDiscard);
+		
+	}
+		
 }
 
 //
@@ -297,6 +301,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
 		160, 60+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
 		NULL, NULL);
+	CreateWindowW(L"button", L"Plot average",
+		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
+		100, 260, 80, 20, hWnd, (HMENU)ID_CHECK_AVG,
+		NULL, NULL);
 
 	EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_X), FALSE);
 	EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_Y), FALSE);
@@ -419,51 +427,57 @@ void DrawDoubleBuffer(HWND hWnd)
 void CheckboxOnCheck(HWND hWnd, int id)
 {
 
-	bool *actualAxis;
+	bool *drawActualAxis;
 	switch (id)
 	{
 	case ID_CHECK_GYRO_X:
-		actualAxis = &dataLog->axesToDrawGyro.X;
+		drawActualAxis = &dataLog->axesToDrawGyro.X;
 		if (dataLog->drawingMode == 2 || dataLog->drawingMode == 0) dataLog->drawingMode += 1;
 		else dataLog->drawingMode -= 1;
 		break;
 	case ID_CHECK_GYRO_Y:
-		actualAxis = &dataLog->axesToDrawGyro.Y;
+		drawActualAxis = &dataLog->axesToDrawGyro.Y;
 		if (dataLog->drawingMode == pos) dataLog->drawingMode = both;
 		else dataLog->drawingMode = gyro;
 		break;
 	case ID_CHECK_GYRO_Z:
-		actualAxis = &dataLog->axesToDrawGyro.Z;
+		drawActualAxis = &dataLog->axesToDrawGyro.Z;
 		if (dataLog->drawingMode == pos) dataLog->drawingMode = both;
 		else dataLog->drawingMode = gyro;
 		break;
 	case ID_CHECK_POS_X:
-		actualAxis = &dataLog->axesToDrawPos.X;
+		drawActualAxis = &dataLog->axesToDrawPos.X;
 		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
 		else dataLog->drawingMode = pos;
 		break;
 	case ID_CHECK_POS_Y:
-		actualAxis = &dataLog->axesToDrawPos.Y;
+		drawActualAxis = &dataLog->axesToDrawPos.Y;
 		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
 		else dataLog->drawingMode = pos;
 		break;
 	case ID_CHECK_POS_Z:
-		actualAxis = &dataLog->axesToDrawPos.Z;
+		drawActualAxis = &dataLog->axesToDrawPos.Z;
 		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
 		else dataLog->drawingMode = pos;
-
+		break;
+	case ID_CHECK_AVG:
+		drawActualAxis = NULL;
+		if (dataLog->averaged == FALSE) dataLog->averaged = TRUE;
+		else dataLog->averaged = FALSE;
 		break;
 	}
 
 	if (IsDlgButtonChecked(hWnd, id))
 	{
 		CheckDlgButton(hWnd, id, BST_UNCHECKED);
-		*actualAxis = FALSE;
+		if(drawActualAxis != NULL)
+		*drawActualAxis = FALSE;
 	}
 	else
 	{
 		CheckDlgButton(hWnd, id, BST_CHECKED);
-		*actualAxis = TRUE;
+		if (drawActualAxis != NULL)
+		*drawActualAxis = TRUE;
 	}
 }
 
@@ -504,7 +518,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case DISCARD_BTN:
 			//repaintWindow(hWnd, hdc, ps, &drawArea1);
 			DiscardHandler(hWnd);
-
+			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_TIME_DOWN:
 			//repaintWindow(hWnd, hdc, ps, NULL);
@@ -583,6 +597,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CheckboxOnCheck(hWnd, ID_CHECK_POS_Z);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			//RedrawWindow(hWnd, &drawArea1, NULL, NULL);
+			break;
+		case ID_CHECK_AVG:
+			CheckboxOnCheck(hWnd, ID_CHECK_AVG);
+			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 
 		default:

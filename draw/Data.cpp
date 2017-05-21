@@ -26,7 +26,7 @@ CData::CData(HWND hWnd)
 	zoomY = 1;
 	zoomX = 1;
 	scrollPos = 0;
-
+	averaged = 0;
 	axesToDrawGyro.axes = 0;
 	axesToDrawPos.axes = 0;
 }
@@ -83,12 +83,20 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 	Pen white(Color(255, 255, 255, 255));
 	TAxesToDraw *axesToDraw;
 	std::vector<Point3D> *dataToDraw;
+	std::vector<Point3D> averagedData;
 	PointF drawPointStart, drawPointEnd;
 
 	float drawYOffset = (drawArea.bottom - drawArea.top) / 2 + drawArea.top;
 	if (gyroOrPos)
 	{
-		dataToDraw = &gyroData;
+		if (averaged)
+		{
+			averagedData = Average(gyroData);
+			dataToDraw = &averagedData;
+		}
+		else
+			dataToDraw = &gyroData;
+		
 		axesToDraw = &axesToDrawGyro;
 	}
 	else
@@ -96,7 +104,16 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 		pen.SetColor(Color::Brown);
 		pen2.SetColor(Color::Cyan);
 		pen3.SetColor(Color::ForestGreen);
-		dataToDraw = &posData;
+
+		if (averaged)
+		{
+			
+			averagedData = Average(posData);
+			dataToDraw = &averagedData;
+		}
+		else
+			dataToDraw = &posData;
+
 		axesToDraw = &axesToDrawPos;
 	}
 	//switch (drawingMode)
@@ -119,7 +136,7 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 	//	break;
 	//}
 
-
+	int size = dataToDraw->size();
 	graphics.SetSmoothingMode(SmoothingModeHighQuality);
 
 	for (int i = 1; i < dataToDraw->size(); i++)
@@ -197,13 +214,17 @@ bool CData::Read()
 
 void CData::DiscardSamples(std::vector<Point3D> dataVector, int amountOfSamples)
 {
+	if (amountOfSamples > dataVector.size()) return;
 	dataVector.erase(dataVector.begin(), dataVector.begin() + amountOfSamples);
 }
 
 void CData::DiscardSamples(int amountOfSamples)
 {
+	if (amountOfSamples > gyroData.size()) return;
 	gyroData.erase(gyroData.begin(), gyroData.begin() + amountOfSamples);
 	posData.erase(posData.begin(), posData.begin() + amountOfSamples);
+	dataSize = gyroData.size();
+
 }
 
 void CData::ChangeZoom(double amount, bool plusOrMinus)
@@ -234,7 +255,42 @@ std::vector<Point3D> CData::Integrate(std::vector<Point3D> dataVector)
 
 	return integratedVector;
 }
+std::vector<Point3D> CData::Average(std::vector<Point3D> dataVector)
+{
+	Point3D  averagedPoint;
+	Point3D  sumPoint;
+	std::vector<Point3D> averagedVector;
+	int pointsAmount = 0;
 
+	averagedPoint.x = 0;
+	averagedPoint.y = 0;
+	averagedPoint.z = 0;
+
+	sumPoint.x = 0;
+	sumPoint.y = 0;
+	sumPoint.z = 0;
+
+
+
+
+	for (auto point : dataVector)
+	{
+		pointsAmount++;
+
+		sumPoint.x += point.x;
+		sumPoint.y += point.y;
+		sumPoint.z += point.z;
+
+		averagedPoint.x = sumPoint.x / pointsAmount;
+		averagedPoint.y = sumPoint.y / pointsAmount;
+		averagedPoint.z = sumPoint.z / pointsAmount;
+
+
+		averagedVector.push_back(averagedPoint);
+	}
+
+	return averagedVector;
+}
 CData::~CData()
 {
 	file.close();

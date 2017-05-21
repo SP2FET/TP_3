@@ -31,6 +31,7 @@
 #define ID_CHECK_POS_X                  603
 #define ID_CHECK_POS_Y                  604
 #define ID_CHECK_POS_Z                  605
+#define ID_CHECK_AVG                    606
 #define ID_NO                           1000
 #define ID_YES                          1001
 #define IDC_DISCARD_TEXT                1002

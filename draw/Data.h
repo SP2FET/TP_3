@@ -43,6 +43,7 @@ private:
 public:
 	double zoomY;
 	double zoomX;
+	bool averaged;
 	int scrollPos;
 	int dataSize;
 	TAxesToDraw axesToDrawGyro, axesToDrawPos;
@@ -57,6 +58,7 @@ public:
 	void DiscardSamples(int amountOfSamples);
 	void ChangeZoom(double amount, bool plusOrMinus);
 	std::vector<Point3D> Integrate(std::vector<Point3D> dataVector);
+	std::vector<Point3D> Average(std::vector<Point3D> dataVector);
 	~CData();
 };
 
