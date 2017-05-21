@@ -149,6 +149,7 @@ void DiscardHandler(HWND hWnd)
 	GetWindowText(hText, discardBuffer, textLength + 1);
 	samplesToDiscard = _wtoi(discardBuffer);
 	if (samplesToDiscard > dataLog->dataSize) return;
+
 	int ret = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DELETE), hWnd, DlgProc);
 	if (ret == ID_YES)
 		dataLog->DiscardSamples(samplesToDiscard);
@@ -210,7 +211,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hInst = hInstance; // Store instance handle (of exe) in our global variable
 
 	// main window
-	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, 0, 800, 600, NULL, NULL, hInstance, NULL);
 
 	dataLog = new CData(hWnd);
@@ -220,20 +221,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
 		TEXT("DISCARD SAMPLES"),                  // the caption of the button
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
-		100, 170,                                  // the left and top co-ordinates
+		100, 190,                                  // the left and top co-ordinates
 		110, 25,                              // width and height
 		hWnd,                                 // parent window handle
 		(HMENU)DISCARD_BTN,                   // the ID of your button
-		hInstance,                            // the instance of your application
-		NULL);                               // extra bits you dont really need
-
-	hwndButton = CreateWindow(TEXT("button"),                      // The class name required is button
-		TEXT("DrawAll"),                  // the caption of the button
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  // the styles
-		0, 0,                                  // the left and top co-ordinates
-		80, 25,                              // width and height
-		hWnd,                                 // parent window handle
-		(HMENU)ID_TIME_DOWN,                   // the ID of your button
 		hInstance,                            // the instance of your application
 		NULL);                               // extra bits you dont really need
 
@@ -284,27 +275,27 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	CreateWindowW(L"button", L"Gyro X",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_X,
+		100, 20+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Y",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 40, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Y,
+		100, 40+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Z",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 60, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Z,
+		100, 60+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Z,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos X",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_X,
+		160, 20+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Y",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 40, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Y,
+		160, 40+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Z",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 60, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
+		160, 60+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
 		NULL, NULL);
 
 	EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_X), FALSE);
@@ -348,27 +339,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 
-	hwndButton = CreateWindow(TEXT("button"), TEXT("Timer ON"),
-		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-		0, 155, 100, 30, hWnd, (HMENU)ID_RBUTTON1, GetModuleHandle(NULL), NULL);
-
-	hwndButton = CreateWindow(TEXT("button"), TEXT("Timer OFF"),
-		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-		0, 200, 100, 30, hWnd, (HMENU)ID_RBUTTON2, GetModuleHandle(NULL), NULL);
-
-
 	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Axis to plot"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
-		80, 3, 150, 100,
+		80, 23, 150, 100,
 		hWnd, NULL, hInstance, 0);
 
 	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Samples to discard"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
-		80, 120, 150, 100,
+		80, 140, 150, 100,
 		hWnd, NULL, hInstance, 0);
 
 	 hText = CreateWindow(TEXT("EDIT"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
-		130, 140, 50, 20, hWnd, NULL, hInstance, NULL);
+		130, 160, 50, 20, hWnd, NULL, hInstance, NULL);
 	/*hwndButton = CreateWindow(TEXT("button"), TEXT("Graph"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
 		600,0, 500, 500, hWnd, (HMENU)ID_GROUP1, GetModuleHandle(NULL), NULL);*/
