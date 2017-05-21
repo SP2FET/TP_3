@@ -30,6 +30,7 @@ INT samplesToDiscard;
 HWND hwndButton;
 HWND hZoomY, hZoomX;
 HWND hScrollBar;
+HWND hText;
 // sent data
 int col = 0;
 std::vector<Point> data;
@@ -143,9 +144,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 void DiscardHandler(HWND hWnd)
 {
-	
-
-
+	DWORD textLength = GetWindowTextLength(hText);
+	LPWSTR discardBuffer = (LPWSTR)GlobalAlloc(GPTR, textLength + 1);
+	GetWindowText(hText, discardBuffer, textLength + 1);
+	samplesToDiscard = _wtoi(discardBuffer);
+	if (samplesToDiscard > dataLog->dataSize) return;
 	int ret = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DELETE), hWnd, DlgProc);
 	if (ret == ID_YES)
 		dataLog->DiscardSamples(samplesToDiscard);
@@ -364,7 +367,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		80, 120, 150, 100,
 		hWnd, NULL, hInstance, 0);
 
-	HWND hText = CreateWindow(TEXT("EDIT"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
+	 hText = CreateWindow(TEXT("EDIT"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
 		130, 140, 50, 20, hWnd, NULL, hInstance, NULL);
 	/*hwndButton = CreateWindow(TEXT("button"), TEXT("Graph"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
