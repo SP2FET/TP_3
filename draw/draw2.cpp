@@ -22,7 +22,7 @@ HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
-CData *dataLog;
+CData *loggedData;
 
 INT samplesToDiscard;
 
@@ -32,10 +32,9 @@ HWND hZoomY, hZoomX;
 HWND hScrollBar;
 HWND hText;
 // sent data
-int col = 0;
-std::vector<Point> data;
-RECT drawArea1 = { 350, 20, 350 + 400, 400 };
-RECT drawArea2 = { 50, 400, 650, 422 };
+
+RECT drawArea1 = { 350, 20, 750, 400 };
+
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -52,11 +51,6 @@ bool CALLBACK SetFont(HWND child, LPARAM font) {
 	return true;
 }
 
-void MyOnPaint(HDC hdc)
-{
-
-	dataLog->Draw(hdc, drawArea1);
-}
 
 void repaintWindow(HWND hWnd, HDC &hdc, PAINTSTRUCT &ps, RECT *drawArea)
 {
@@ -68,25 +62,6 @@ void repaintWindow(HWND hWnd, HDC &hdc, PAINTSTRUCT &ps, RECT *drawArea)
 
 	DrawDoubleBuffer(hWnd);
 
-	//hdc = BeginPaint(hWnd, &ps);
-	 //MyOnPaint(hdc);
-	 //EndPaint(hWnd, &ps);
-}
-
-void inputData()
-{
-	data.push_back(Point(0, 0));
-	for (int i = 1; i < 100; i++) {
-		data.push_back(Point(2 * i + 1, 200 * rand() / RAND_MAX));
-	}
-}
-
-
-int OnCreate(HWND window)
-{
-	inputData();
-
-	return 0;
 }
 
 
@@ -123,8 +98,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		return FALSE;
 	}
 
-
-
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_DRAW));
 
 	// Main message loop:
@@ -148,12 +121,12 @@ void DiscardHandler(HWND hWnd)
 	LPWSTR discardBuffer = (LPWSTR)GlobalAlloc(GPTR, textLength + 1);
 	GetWindowText(hText, discardBuffer, textLength + 1);
 	samplesToDiscard = _wtoi(discardBuffer);
-	if (samplesToDiscard > dataLog->dataSize) return;
+	if (samplesToDiscard > loggedData->dataSize) return;
 
 	int ret = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DELETE), hWnd, DlgProc);
 	if (ret == ID_YES)
 	{
-		dataLog->DiscardSamples(samplesToDiscard);
+		loggedData->DiscardSamples(samplesToDiscard);
 		
 	}
 		
@@ -186,7 +159,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DRAW));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-	//wcex.hbrBackground = NULL;
 	wcex.lpszMenuName = MAKEINTRESOURCE(IDC_DRAW);
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -205,20 +177,30 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        create and display the main program window.
 //
 
+void UpdateScrollBar()
+{
+	SCROLLINFO si;
+	ZeroMemory(&si, sizeof(si));
+	si.cbSize = sizeof(SCROLLINFO);
+	si.fMask = SIF_RANGE | SIF_PAGE;
+	si.nMin = 0;
+	si.nMax = loggedData->dataSize * loggedData->zoomX / 2;
+	si.nPage = (loggedData->dataSize + loggedData->zoomX) / loggedData->zoomX;
+
+	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+
+}
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd;
-
-
-
 	hInst = hInstance; // Store instance handle (of exe) in our global variable
 
 	// main window
 	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, 0, 800, 600, NULL, NULL, hInstance, NULL);
 
-	dataLog = new CData(hWnd);
+	loggedData = new CData(hWnd);
 
 	// create button and store the handle    
 
@@ -269,37 +251,30 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		(HMENU)ID_ZOOM_X_OUT,                   // the ID of your button
 		hInstance,                            // the instance of your application
 		NULL);
-	// create button and store the handle                                                       
-
-	/*HWND hLeftLabel = CreateWindowW(L"Static", L"100",
-		WS_CHILD | WS_VISIBLE, 0, 0, 30, 20, hWnd, (HMENU)1, NULL, NULL);
-
-	HWND hRightLabel = CreateWindowW(L"Static", L"0",
-		WS_CHILD | WS_VISIBLE, 0, 0, 10, 20, hWnd, (HMENU)2, NULL, NULL);*/
-
+	
 	CreateWindowW(L"button", L"Gyro X",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 20+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_X,
+		100, 40, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Y",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 40+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Y,
+		100, 60, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Gyro Z",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		100, 60+20, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Z,
+		100, 80, 50, 20, hWnd, (HMENU)ID_CHECK_GYRO_Z,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos X",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 20+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_X,
+		160, 40, 50, 20, hWnd, (HMENU)ID_CHECK_POS_X,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Y",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 40+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Y,
+		160, 60, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Y,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Pos Z",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-		160, 60+20, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
+		160, 80, 50, 20, hWnd, (HMENU)ID_CHECK_POS_Z,
 		NULL, NULL);
 	CreateWindowW(L"button", L"Plot average",
 		WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
@@ -321,9 +296,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	SendMessageW(hZoomY, TBM_SETPAGESIZE, 0, 1);
 	SendMessageW(hZoomY, TBM_SETTICFREQ, 5, 0);
 	SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - 1);
-	//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
-	//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
-
+	
 	hZoomX = CreateWindowW(TRACKBAR_CLASSW, L"ZOOM X Control",
 		WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS | TBS_HORZ,
 		410, 420, 270, 30, hWnd, (HMENU)3, NULL, NULL);
@@ -337,19 +310,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		NULL, WS_CHILD | WS_VISIBLE,
 		410, 470, 270, 21, hWnd, NULL, hInstance, NULL);
 
-	SCROLLINFO si;
-	ZeroMemory(&si, sizeof(si));
-	si.cbSize = sizeof(SCROLLINFO);
-	si.fMask = SIF_RANGE | SIF_PAGE;
-	si.nMin = 0;
-	si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
-	si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
-
-	SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
+	UpdateScrollBar();
 
 	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Axis to plot"),
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX | WS_GROUP,
-		80, 23, 150, 100,
+		80, 23, 150, 90,
 		hWnd, NULL, hInstance, 0);
 
 	hwndButton = CreateWindow(TEXT("BUTTON"), TEXT("Samples to discard"),
@@ -359,21 +324,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	 hText = CreateWindow(TEXT("EDIT"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
 		130, 160, 50, 20, hWnd, NULL, hInstance, NULL);
-	/*hwndButton = CreateWindow(TEXT("button"), TEXT("Graph"),
-		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-		600,0, 500, 500, hWnd, (HMENU)ID_GROUP1, GetModuleHandle(NULL), NULL);*/
-
-		//hwndButton = CreateWindow(TEXT("static"),                      // The class name required is button
-		//	TEXT("Test123"),                  // the caption of the button
-		//	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | SS_CENTER,  // the styles
-		//	500, 60,                                  // the left and top co-ordinates
-		//	500, 50,                              // width and height
-		//	hWnd,                                 // parent window handle
-		//	(HMENU)ID_LABEL1,                   // the ID of your button
-		//	hInstance,                            // the instance of your application
-		//	NULL);
-
-	OnCreate(hWnd);
 
 	if (!hWnd)
 	{
@@ -415,7 +365,7 @@ void DrawDoubleBuffer(HWND hWnd)
 	SelectObject(Memhdc, Membitmap);
 
 	FillRect(Memhdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW));
-	dataLog->Draw(Memhdc, drawArea1);
+	loggedData->Draw(Memhdc, drawArea1);
 
 	BitBlt(hdc, 0, 0, win_width, win_height, Memhdc, 0, 0, SRCCOPY);
 	DeleteObject(Membitmap);
@@ -431,39 +381,39 @@ void CheckboxOnCheck(HWND hWnd, int id)
 	switch (id)
 	{
 	case ID_CHECK_GYRO_X:
-		drawActualAxis = &dataLog->axesToDrawGyro.X;
-		if (dataLog->drawingMode == 2 || dataLog->drawingMode == 0) dataLog->drawingMode += 1;
-		else dataLog->drawingMode -= 1;
+		drawActualAxis = &loggedData->axesToDrawGyro.X;
+		if (loggedData->drawingMode == pos) loggedData->drawingMode = both;
+		else loggedData->drawingMode = gyro;
 		break;
 	case ID_CHECK_GYRO_Y:
-		drawActualAxis = &dataLog->axesToDrawGyro.Y;
-		if (dataLog->drawingMode == pos) dataLog->drawingMode = both;
-		else dataLog->drawingMode = gyro;
+		drawActualAxis = &loggedData->axesToDrawGyro.Y;
+		if (loggedData->drawingMode == pos) loggedData->drawingMode = both;
+		else loggedData->drawingMode = gyro;
 		break;
 	case ID_CHECK_GYRO_Z:
-		drawActualAxis = &dataLog->axesToDrawGyro.Z;
-		if (dataLog->drawingMode == pos) dataLog->drawingMode = both;
-		else dataLog->drawingMode = gyro;
+		drawActualAxis = &loggedData->axesToDrawGyro.Z;
+		if (loggedData->drawingMode == pos) loggedData->drawingMode = both;
+		else loggedData->drawingMode = gyro;
 		break;
 	case ID_CHECK_POS_X:
-		drawActualAxis = &dataLog->axesToDrawPos.X;
-		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
-		else dataLog->drawingMode = pos;
+		drawActualAxis = &loggedData->axesToDrawPos.X;
+		if (loggedData->drawingMode == gyro) loggedData->drawingMode = both;
+		else loggedData->drawingMode = pos;
 		break;
 	case ID_CHECK_POS_Y:
-		drawActualAxis = &dataLog->axesToDrawPos.Y;
-		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
-		else dataLog->drawingMode = pos;
+		drawActualAxis = &loggedData->axesToDrawPos.Y;
+		if (loggedData->drawingMode == gyro) loggedData->drawingMode = both;
+		else loggedData->drawingMode = pos;
 		break;
 	case ID_CHECK_POS_Z:
-		drawActualAxis = &dataLog->axesToDrawPos.Z;
-		if (dataLog->drawingMode == gyro) dataLog->drawingMode = both;
-		else dataLog->drawingMode = pos;
+		drawActualAxis = &loggedData->axesToDrawPos.Z;
+		if (loggedData->drawingMode == gyro) loggedData->drawingMode = both;
+		else loggedData->drawingMode = pos;
 		break;
 	case ID_CHECK_AVG:
 		drawActualAxis = NULL;
-		if (dataLog->averaged == FALSE) dataLog->averaged = TRUE;
-		else dataLog->averaged = FALSE;
+		if (loggedData->averaged == FALSE) loggedData->averaged = TRUE;
+		else loggedData->averaged = FALSE;
 		break;
 	}
 
@@ -494,84 +444,59 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wmId = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
 
-
-
-		// MENU & BUTTON messages
-		// Parse the menu selections:
 		switch (wmId)
 		{
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_FILE_OPEN:
-			dataLog->Open();
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_X), TRUE);
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_Y), TRUE);
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_Z), TRUE);
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_X), TRUE);
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Y), TRUE);
-			EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Z), TRUE);
+			if (!loggedData->Open()) 
+			{
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_X), TRUE);
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_Y), TRUE);
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_GYRO_Z), TRUE);
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_X), TRUE);
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Y), TRUE);
+				EnableWindow(GetDlgItem(hWnd, ID_CHECK_POS_Z), TRUE);
+			}
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
 		case DISCARD_BTN:
-			//repaintWindow(hWnd, hdc, ps, &drawArea1);
+		
 			DiscardHandler(hWnd);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
-		case ID_TIME_DOWN:
-			//repaintWindow(hWnd, hdc, ps, NULL);
-			dataLog->Open();
-			break;
 		case ID_ZOOM_IN:
-			dataLog->ChangeZoom(5, TRUE);
-			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoomY);
+			loggedData->ChangeZoom(5, TRUE);
+			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - loggedData->zoomY);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_OUT:
-			dataLog->ChangeZoom(5, FALSE);
-			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - dataLog->zoomY);
+			loggedData->ChangeZoom(5, FALSE);
+			SendMessageW(hZoomY, TBM_SETPOS, TRUE, MAX_ZOOM_Y - loggedData->zoomY);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_X_IN:
-			dataLog->zoomX++;
-			if (dataLog->zoomX > 100) dataLog->zoomX = 100;
-			SendMessageW(hZoomX, TBM_SETPOS, TRUE, dataLog->zoomX);
+			loggedData->zoomX++;
+			if (loggedData->zoomX > 100) loggedData->zoomX = 100;
+			SendMessageW(hZoomX, TBM_SETPOS, TRUE, loggedData->zoomX);
 
-			ZeroMemory(&si, sizeof(si));
-			si.cbSize = sizeof(SCROLLINFO);
-			si.fMask = SIF_RANGE | SIF_PAGE;
-			si.nMin = 0;
-			si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
-			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
+			UpdateScrollBar();
 
-			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
 		case ID_ZOOM_X_OUT:
 
-			dataLog->zoomX--;
-			if (dataLog->zoomX < 1) dataLog->zoomX = 1;
-			SendMessageW(hZoomX, TBM_SETPOS, TRUE, dataLog->zoomX);
+			loggedData->zoomX--;
+			if (loggedData->zoomX < 1) loggedData->zoomX = 1;
+			SendMessageW(hZoomX, TBM_SETPOS, TRUE, loggedData->zoomX);
 
-			ZeroMemory(&si, sizeof(si));
-			si.cbSize = sizeof(SCROLLINFO);
-			si.fMask = SIF_RANGE | SIF_PAGE;
-			si.nMin = 0;
-			si.nMax = dataLog->dataSize * dataLog->zoomX / 2;
-			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
+			UpdateScrollBar();
 
-			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
 			break;
-		case ID_RBUTTON1:
-			SetTimer(hWnd, TMR_1, 25, 0);
-			break;
-		case ID_RBUTTON2:
-			KillTimer(hWnd, TMR_1);
-			break;
-
 		case ID_CHECK_GYRO_X:
 			CheckboxOnCheck(hWnd, ID_CHECK_GYRO_X);
 			repaintWindow(hWnd, hdc, ps, &drawArea1);
@@ -607,15 +532,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
-		/*case WM_PAINT:
-			DrawDoubleBuffer(hWnd);
-			break;*/
 
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW));
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
-		// TODO: Add any drawing code here (not depend on timer, buttons)
 		EndPaint(hWnd, &ps);
 
 		break;
@@ -623,7 +544,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return true;
 		break;
 	case WM_DESTROY:
-		delete dataLog;
+		delete loggedData;
 		PostQuitMessage(0);
 		break;
 
@@ -632,7 +553,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_VSCROLL:
-		dataLog->zoomY = 100 - SendMessageW(hZoomY, TBM_GETPOS, 0, 0);
+		loggedData->zoomY = 100 - SendMessageW(hZoomY, TBM_GETPOS, 0, 0);
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		break;
 
@@ -659,21 +580,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			default:
 				break;
 			}
-			dataLog->scrollPos = GetScrollPos((HWND)lParam, SB_CTL);
+			loggedData->scrollPos = GetScrollPos((HWND)lParam, SB_CTL);
 		}
 		else
 		{
-			dataLog->zoomX = SendMessageW(hZoomX, TBM_GETPOS, 0, 0);
-			ZeroMemory(&si, sizeof(si));
-
-			si.cbSize = sizeof(SCROLLINFO);
-			si.fMask = SIF_RANGE | SIF_PAGE;
-			si.nMin = 0;
-			si.nMax = dataLog->dataSize*dataLog->zoomX / 2;
-			si.nPage = (dataLog->dataSize + dataLog->zoomX) / dataLog->zoomX;
-
-			SetScrollInfo(hScrollBar, SB_CTL, &si, TRUE);
-
+			loggedData->zoomX = SendMessageW(hZoomX, TBM_GETPOS, 0, 0);
+			UpdateScrollBar();
 		}
 		repaintWindow(hWnd, hdc, ps, &drawArea1);
 		break;
@@ -681,9 +593,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 		case TMR_1:
-			//force window to repaint
-			//repaintWindow(hWnd, hdc, ps, &drawArea1);
-			
 			break;
 		}
 

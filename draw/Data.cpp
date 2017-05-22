@@ -53,7 +53,6 @@ bool CData::Open()
 			AllocConsole();
 			AttachConsole(GetCurrentProcessId());
 			freopen("CON", "w", stdout);
-			std::cout << "dupa";
 #endif // DEBUG
 
 			return 0;
@@ -67,10 +66,12 @@ bool CData::DrawGrid(HDC hdc, RECT drawArea)
 {
 	Graphics graphics(hdc);
 	Pen pen2(Color(255, 153, 153, 153));
+	LONG drawXOffset = (drawArea.right - drawArea.left) / 2 + drawArea.left;
+	LONG drawYOffset = (drawArea.bottom - drawArea.top) / 2 + drawArea.top;
 
 	Rectangle(hdc, drawArea.left, drawArea.top, drawArea.right, drawArea.bottom);
-	graphics.DrawLine(&pen2, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.top, (drawArea.right - drawArea.left) / 2 + drawArea.left, drawArea.bottom);
-	graphics.DrawLine(&pen2, drawArea.left, (drawArea.bottom - drawArea.top) / 2 + drawArea.top, drawArea.right, (drawArea.bottom - drawArea.top) / 2 + drawArea.top);
+	graphics.DrawLine(&pen2,drawXOffset, drawArea.top, drawXOffset, drawArea.bottom);
+	graphics.DrawLine(&pen2, drawArea.left, drawYOffset, drawArea.right, drawYOffset);
 
 	return 0;
 }
@@ -116,25 +117,6 @@ void CData::DrawCurve(HDC hdc, RECT drawArea, bool gyroOrPos)
 
 		axesToDraw = &axesToDrawPos;
 	}
-	//switch (drawingMode)
-	//{
-	//case 1:
-	//	dataToDraw = &gyroData;
-	//	axesToDraw = &axesToDrawGyro;
-	//	break;
-	//case 2:
-	//	dataToDraw = &posData;
-	//	axesToDraw = &axesToDrawPos;
-	//	break;
-	//case 3:
-	//	//both
-	//	dataToDraw = &gyroData;
-	//	axesToDraw = &axesToDrawGyro;
-	//	break;
-	//case 0:
-	//	return;
-	//	break;
-	//}
 
 	int size = dataToDraw->size();
 	graphics.SetSmoothingMode(SmoothingModeHighQuality);
@@ -172,7 +154,6 @@ bool CData::Draw(HDC hdc, RECT drawArea)
 	DrawGrid(hdc, drawArea);
 	DrawCurve(hdc, drawArea, TRUE);
 	DrawCurve(hdc, drawArea, FALSE);
-	//graphics.DrawRectangle(&pen, 50 + value, 400, 10, 20);
 	return 0;
 }
 
@@ -190,15 +171,15 @@ bool CData::Read()
 	}
 
 
-	while (std::getline(file, line)) // read one line from file
+	while (std::getline(file, line))
 	{
-		std::istringstream iss(line); // access line as a stream
+		std::istringstream stringStream(line); // linia z pliku jako stream
 
-		iss >> dummy >> dummy >> dummy; //olanie polozenia
-		iss >> dummy >> dummy >> dummy; //olanie akcelerometru
-		iss >> dummy >> dummy >> dummy; // i magnetometru
+		stringStream >> dummy >> dummy >> dummy; //olanie polozenia
+		stringStream >> dummy >> dummy >> dummy; //olanie akcelerometru
+		stringStream >> dummy >> dummy >> dummy; // i magnetometru
 
-		iss >> gyroPoint.x >> gyroPoint.y >> gyroPoint.z;
+		stringStream >> gyroPoint.x >> gyroPoint.y >> gyroPoint.z;
 
 		
 
